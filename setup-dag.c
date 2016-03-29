@@ -58,14 +58,6 @@ void setup_dag(void)
 	dag_add_dependency(obj_file, xmake_h);
 	dag_add_dependency(xmake, obj_file);
 
-	source_file = setup_file("build.c");
-	obj_file = setup_file("build.o");
-	obj_file->command = strdup("cc -Wall -Wextra -std=c99 -pedantic -O -D_POSIX_C_SOURCE=200112L -c build.c");
-	dag_add_dependency(obj_file, source_file);
-	dag_add_dependency(obj_file, depdag_h);
-	dag_add_dependency(obj_file, xmake_h);
-	dag_add_dependency(xmake, obj_file);
-
 	source_file = setup_file("xmake.c");
 	obj_file = setup_file("xmake.o");
 	obj_file->command = strdup("cc -Wall -Wextra -std=c99 -pedantic -O -c xmake.c");
