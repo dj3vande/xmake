@@ -10,6 +10,8 @@
 
 #include "xmake.h"
 
+#define MAX_JOBS	2
+
 struct dep_vec all_deps;
 static struct dep_vec running;
 
@@ -88,31 +90,57 @@ void finish_target(struct dep_node *n)
 
 static void run_build(void)
 {
-	while (dag_by_status[BUILD_READY].head != NULL)
-	{
-		struct dep_node *n = dag_by_status[BUILD_READY].head;
+	struct dep_node *n;
 
-		start_target(n);
+	while (dag_by_status[BUILD_READY].head != NULL || running.num > 0)
+	{
+		size_t i;
+		int maxfd;
+		fd_set fds;
+
+		while (running.num < MAX_JOBS)
+		{
+			n = dag_by_status[BUILD_READY].head;
+			if (n == NULL)
+				break;
+			start_target(n);
+		}
+
 		if (running.num == 0) continue;
 
 		/*
-		 * Wait until it's done.
-		 * We rely on the fd selecting as readable when the subprocess
-		 * exits (since the kernel closes it causing a read to return
-		 * 0 bytes without blocking).
+		 * Wait for something to happen.
+		 * We rely on our end of the pipe selecting as readable when
+		 * the subprocess exits (since the kernel closes it causing a
+		 * read to return 0 bytes without blocking); for bonus
+		 * correctness points, we should watch for SIGCHLD.
 		 */
-		do
+		FD_ZERO(&fds);
+		for (i = 0; i < running.num; i++)
 		{
-			fd_set fds;
-			int fd = n->build_state.pipefd;
-			FD_ZERO(&fds);
+			int fd;
+			n = running.nodes[i];
+			fd = n->build_state.pipefd;
 			FD_SET(fd, &fds);
-			/* For "block until something happens" side effect */
-			select(fd+1, &fds, NULL, NULL, NULL);
-			collect_output(n);
-		} while (!reap(n));
+			if (fd > maxfd)
+				maxfd = fd;
+		}
+		/*
+		 * We only use the blocking side effect of select().
+		 * We could avoid a few bogus system calls by being more
+		 * careful here.
+		 */
+		select(maxfd+1, &fds, NULL, NULL, NULL);
 
-		finish_target(n);
+		for (i = 0; i < running.num; )
+		{
+			n = running.nodes[i];
+			collect_output(n);
+			if (reap(n))
+				finish_target(n);
+			else
+				i++;
+		}
 	}
 }
 
