@@ -42,14 +42,14 @@ void setup_dag(void)
 
 	source_file = setup_file("setup-dag.c");
 	obj_file = setup_file("setup-dag.o");
-	obj_file->command = strdup("cc -Wall -Wextra -std=c99 -pedantic -O D_POSIX_C_SOURCE=200112L -c setup-dag.c");
+	obj_file->command = strdup("cc -Wall -Wextra -std=c99 -pedantic -O -D_POSIX_C_SOURCE=200112L -c setup-dag.c");
 	dag_add_dependency(obj_file, source_file);
 	dag_add_dependency(obj_file, depdag_h);
 	dag_add_dependency(obj_file, xmake_h);
 
 	source_file = setup_file("build.c");
 	obj_file = setup_file("build.o");
-	obj_file->command = strdup("cc -Wall -Wextra -std=c99 -pedantic -O D_POSIX_C_SOURCE=200112L -c build.c");
+	obj_file->command = strdup("cc -Wall -Wextra -std=c99 -pedantic -O -D_POSIX_C_SOURCE=200112L -c build.c");
 	dag_add_dependency(obj_file, source_file);
 	dag_add_dependency(obj_file, depdag_h);
 	dag_add_dependency(obj_file, xmake_h);

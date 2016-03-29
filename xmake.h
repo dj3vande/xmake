@@ -5,6 +5,8 @@
 
 extern struct dep_vec all_deps;
 
+void setup_dag(void);
+
 /* subprocess / target build management */
 void start_build(struct dep_node *n);
 void collect_output(struct dep_node *n);

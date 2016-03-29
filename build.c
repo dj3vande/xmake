@@ -38,7 +38,7 @@ void start_build(struct dep_node *n)
 	if (pid == 0)
 	{
 		/* child: set up and exec */
-		if (dup2(pipefd[1], STDERR_FILENO))
+		if (dup2(pipefd[1], STDERR_FILENO) == -1)
 		{
 			/* Note, this will not be captured by the parent */
 			const char *msg = "failed to dup2 stderr - can't run command\n";
@@ -98,6 +98,9 @@ void collect_output(struct dep_node *n)
 		ssize_t nread = read(fd, readbuf, sizeof readbuf);
 		if (nread == -1)
 			err(EXIT_FAILURE, "collect_output: read");
+		if (nread == 0)	/* Other end probably closed the pipe */
+			return;
+
 		if (n->build_state.out_len + nread > n->build_state.out_max)
 		{
 			void *t;

@@ -54,6 +54,7 @@ void dep_list_link(struct dep_list *l, struct dep_node *n)
 	else
 	{
 		n->prev = l->tail;
+		l->tail->next = n;
 		l->tail = n;
 	}
 	n->container = l;
