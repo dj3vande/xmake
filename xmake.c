@@ -46,7 +46,12 @@ int main(void)
 	{
 		if (n->build_state.out_len > 0)
 		{
-			printf("Build output for '%s':\n", n->name);
+			printf("Target '%s' generated output:\n", n->name);
+			printf("Build command:\n");
+			printf("========\n");
+			printf("%s\n", n->command);
+			printf("========\n");
+			printf("Output:\n");
 			printf("========\n");
 			fwrite(n->build_state.output, 1, n->build_state.out_len, stdout);
 			printf("========\n");
@@ -56,8 +61,14 @@ int main(void)
 	{
 		if (n->build_state.out_len > 0)
 		{
-			printf("Build output for FAILED TARGET '%s':\n", n->name);
+			printf("FAILED TARGET '%s':\n", n->name);
+			printf("Build command:\n");
 			printf("========\n");
+			printf("%s\n", n->command);
+			printf("========\n");
+			printf("Output:\n");
+			printf("========\n");
+
 			fwrite(n->build_state.output, 1, n->build_state.out_len, stdout);
 			printf("========\n");
 		}
