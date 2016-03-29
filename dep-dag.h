@@ -8,6 +8,7 @@ enum build_status
 	BUILD_BLOCKED,	/* dependency is not done */
 	BUILD_READY,	/* all dependencies are done */
 	BUILD_RUNNING,	/* currently working on it */
+	BUILD_FAILED,	/* returned failure status */
 	BUILD_DONE,	/* completely finished */
 	BUILD_NUM_STATUS
 };
@@ -43,7 +44,8 @@ struct dep_node
 	struct {
 		int pid;	/* 0 if not running */
 		int pipefd;	/* to read output from, -1 if absent */
-		char *output;	/* NULL if not run */
+		char *output;	/* as read from pipefd */
+		size_t out_len, out_max;
 	} build_state;
 
 	struct dep_vec dependencies;
