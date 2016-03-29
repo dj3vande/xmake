@@ -88,6 +88,6 @@ void dag_add_dependency(struct dep_node *node, struct dep_node *dependency)
 	dep_vec_add(&node->dependencies, dependency);
 	dep_vec_add(&dependency->dependents, node);
 
-	if (dependency->status != BUILD_READY)
+	if (dependency->status != BUILD_DONE)
 		dag_set_status(node, BUILD_BLOCKED);
 }
