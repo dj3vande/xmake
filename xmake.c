@@ -11,14 +11,48 @@
 
 struct dep_vec all_deps;
 
-int main(void)
+static void report_results(void)
 {
 	struct dep_node *n;
-	setup_dag();
+	for (n = dag_by_status[BUILD_DONE].head; n != NULL; n = n->next)
+	{
+		if (n->build_state.out_len > 0)
+		{
+			printf("Target '%s' generated output:\n", n->name);
+			printf("Build command:\n");
+			printf("========\n");
+			printf("%s\n", n->command);
+			printf("========\n");
+			printf("Output:\n");
+			printf("========\n");
+			fwrite(n->build_state.output, 1, n->build_state.out_len, stdout);
+			printf("========\n");
+		}
+	}
+	for (n = dag_by_status[BUILD_FAILED].head; n != NULL; n = n->next)
+	{
+		if (n->build_state.out_len > 0)
+		{
+			printf("FAILED TARGET '%s':\n", n->name);
+			printf("Build command:\n");
+			printf("========\n");
+			printf("%s\n", n->command);
+			printf("========\n");
+			printf("Output:\n");
+			printf("========\n");
+			fwrite(n->build_state.output, 1, n->build_state.out_len, stdout);
+			printf("========\n");
+		}
+		else
+			printf("Target '%s' FAILED SILENTLY\n", n->name);
+	}
+}
 
+static void run_build(void)
+{
 	while (dag_by_status[BUILD_READY].head != NULL)
 	{
-		n = dag_by_status[BUILD_READY].head;
+		struct dep_node *n = dag_by_status[BUILD_READY].head;
 		start_build(n);	/* unlinks from ready list */
 		if (n->status == BUILD_DONE)	// happens if no dependents
 			continue;
@@ -50,41 +84,14 @@ int main(void)
 		else if (n->status != BUILD_DONE)
 			printf("I am very confused about the build state of '%s' (%u)\n", n->name, (unsigned)n->status);
 	}
+}
 
+int main(void)
+{
+	setup_dag();
+	run_build();
 	printf("Finished building!\n");
-	for (n = dag_by_status[BUILD_DONE].head; n != NULL; n = n->next)
-	{
-		if (n->build_state.out_len > 0)
-		{
-			printf("Target '%s' generated output:\n", n->name);
-			printf("Build command:\n");
-			printf("========\n");
-			printf("%s\n", n->command);
-			printf("========\n");
-			printf("Output:\n");
-			printf("========\n");
-			fwrite(n->build_state.output, 1, n->build_state.out_len, stdout);
-			printf("========\n");
-		}
-	}
-	for (n = dag_by_status[BUILD_FAILED].head; n != NULL; n = n->next)
-	{
-		if (n->build_state.out_len > 0)
-		{
-			printf("FAILED TARGET '%s':\n", n->name);
-			printf("Build command:\n");
-			printf("========\n");
-			printf("%s\n", n->command);
-			printf("========\n");
-			printf("Output:\n");
-			printf("========\n");
-
-			fwrite(n->build_state.output, 1, n->build_state.out_len, stdout);
-			printf("========\n");
-		}
-		else
-			printf("Target '%s' FAILED SILENTLY\n", n->name);
-	}
+	report_results();
 
 	return (dag_by_status[BUILD_FAILED].head == NULL) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
