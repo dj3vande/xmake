@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -10,6 +11,7 @@
 #include "xmake.h"
 
 struct dep_vec all_deps;
+static struct dep_vec running;
 
 static void report_results(void)
 {
@@ -48,15 +50,50 @@ static void report_results(void)
 	}
 }
 
+void start_target(struct dep_node *n)
+{
+	assert(n->status == BUILD_READY);
+	start_build(n);
+	if (n->status == BUILD_DONE)
+	{
+		/* phony target, no command to run */
+		assert(n->command == NULL);
+		return;
+	}
+	printf("Starting build for target '%s'\n", n->name);
+
+	dep_vec_add(&running, n);
+}
+
+/* Expects n to have been successfully reaped! */
+void finish_target(struct dep_node *n)
+{
+	size_t i;
+
+	printf("Target '%s' is finished building\n", n->name);
+	if (n->build_state.out_len > 0)
+		printf("Build for '%s' produced output\n", n->name);
+	if (n->status == BUILD_FAILED)
+		printf("Build for '%s' failed!\n", n->name);
+	else if (n->status != BUILD_DONE)
+		printf("I am very confused about the build state of '%s' (%u)\n", n->name, (unsigned)n->status);
+
+	for (i = 0; i < running.num; i++)
+		if (running.nodes[i] == n)
+		{
+			running.nodes[i] = running.nodes[--running.num];
+			break;
+		}
+}
+
 static void run_build(void)
 {
 	while (dag_by_status[BUILD_READY].head != NULL)
 	{
 		struct dep_node *n = dag_by_status[BUILD_READY].head;
-		start_build(n);	/* unlinks from ready list */
-		if (n->status == BUILD_DONE)	// happens if no dependents
-			continue;
-		printf("Starting build for output '%s'...\n", n->name);
+
+		start_target(n);
+		if (running.num == 0) continue;
 
 		/*
 		 * Wait until it's done.
@@ -75,14 +112,7 @@ static void run_build(void)
 			collect_output(n);
 		} while (!reap(n));
 
-		printf("Target '%s' is finished building\n", n->name);
-
-		if (n->build_state.out_len > 0)
-			printf("Build for '%s' produced output\n", n->name);
-		if (n->status == BUILD_FAILED)
-			printf("Build for '%s' failed!\n", n->name);
-		else if (n->status != BUILD_DONE)
-			printf("I am very confused about the build state of '%s' (%u)\n", n->name, (unsigned)n->status);
+		finish_target(n);
 	}
 }
 
