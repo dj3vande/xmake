@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <sys/types.h>
 #include <unistd.h>
+#include <sys/select.h>
 
 #include <err.h>
 
@@ -17,21 +19,29 @@ int main(void)
 	while (dag_by_status[BUILD_READY].head != NULL)
 	{
 		n = dag_by_status[BUILD_READY].head;
-		printf("Starting build for output '%s'...\n", n->name);
-		start_build(n);
-
-		if (n->status == BUILD_DONE)
-		{
-			printf("Target '%s' completed trivially\n", n->name);
+		start_build(n);	/* unlinks from ready list */
+		if (n->status == BUILD_DONE)	// happens if no dependents
 			continue;
-		}
+		printf("Starting build for output '%s'...\n", n->name);
 
-		/* Lazy substitute for subprocess management */
-		while(!reap(n))
+		/*
+		 * Wait until it's done.
+		 * We rely on the fd selecting as readable when the subprocess
+		 * exits (since the kernel closes it causing a read to return
+		 * 0 bytes without blocking).
+		 */
+		do
 		{
-			sleep(1);
+			fd_set fds;
+			int fd = n->build_state.pipefd;
+			FD_ZERO(&fds);
+			FD_SET(fd, &fds);
+			/* For "block until something happens" side effect */
+			select(fd+1, &fds, NULL, NULL, NULL);
 			collect_output(n);
-		}
+		} while (!reap(n));
+
+		printf("Target '%s' is finished building\n", n->name);
 
 		if (n->build_state.out_len > 0)
 			printf("Build for '%s' produced output\n", n->name);
