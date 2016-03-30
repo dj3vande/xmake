@@ -1,0 +1,31 @@
+xmake is my attempt to learn the hard way why creating a new build
+system is a bad idea.
+Well, there's a little bit more to it than that.  I have a use case
+in mind that requires more interactivity than most build tools
+provide.  But basically, its primary utility is expected to be the
+things I learn while building it, not the things it does.
+
+
+xmake currently understands a very limited subset of Make, and does
+no error checking.
+Specifically, it understands rules of the form
+--------
+target: input...
+	at most one line of build command
+--------
+The command is passed directly to the shell without being interpreted
+internally.  Multiple commands in a single rule is an error.  Multiple
+rules for the same target will accumulate all dependencies and use
+the last nonempty build command.  Targets with no build rules are
+phony and will be silently marked as "done" in the internal data
+structures when we notice that all of their dependencies are done.
+
+In the current implementation, every target is rebuilt on every
+invocation of xmake.  Modification time tracking is near the top
+of the to-do list.
+
+Make's rules for deciding which target to build are way down the
+to-do list; supporting POSIX Make is a long-term "would be nice"
+feature, but the medium-term goal is to support Ninja's build files,
+which are less magical and therefore (hopefully) easier to correctly
+parse.
