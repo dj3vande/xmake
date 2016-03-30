@@ -34,6 +34,10 @@ void setup_dag(void)
 	struct dep_node *xmake_h = setup_file("xmake.h");
 	struct dep_node *depdag_h = setup_file("dep-dag.h");
 	struct dep_node *xmake = setup_file("xmake");
+	struct dep_node *tags = setup_file("tags");
+
+	dag_add_dependency(tags, xmake_h);
+	dag_add_dependency(tags, depdag_h);
 
 	source_file = setup_file("dep-dag.c");
 	obj_file = setup_file("dep-dag.o");
@@ -41,6 +45,7 @@ void setup_dag(void)
 	dag_add_dependency(obj_file, source_file);
 	dag_add_dependency(obj_file, depdag_h);
 	dag_add_dependency(xmake, obj_file);
+	dag_add_dependency(tags, source_file);
 
 	source_file = setup_file("setup-dag.c");
 	obj_file = setup_file("setup-dag.o");
@@ -49,6 +54,7 @@ void setup_dag(void)
 	dag_add_dependency(obj_file, depdag_h);
 	dag_add_dependency(obj_file, xmake_h);
 	dag_add_dependency(xmake, obj_file);
+	dag_add_dependency(tags, source_file);
 
 	source_file = setup_file("build.c");
 	obj_file = setup_file("build.o");
@@ -57,6 +63,7 @@ void setup_dag(void)
 	dag_add_dependency(obj_file, depdag_h);
 	dag_add_dependency(obj_file, xmake_h);
 	dag_add_dependency(xmake, obj_file);
+	dag_add_dependency(tags, source_file);
 
 	source_file = setup_file("xmake.c");
 	obj_file = setup_file("xmake.o");
@@ -64,6 +71,8 @@ void setup_dag(void)
 	dag_add_dependency(obj_file, source_file);
 	dag_add_dependency(obj_file, depdag_h);
 	dag_add_dependency(xmake, obj_file);
+	dag_add_dependency(tags, source_file);
 
 	xmake->command = strdup("cc -o xmake xmake.o build.o dep-dag.o setup-dag.o");
+	tags->command = strdup("ctags -R .");
 }
