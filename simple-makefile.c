@@ -54,7 +54,7 @@ static struct dep_node *process_makefile_dependencies(char *line)
 	filename[strcspn(filename, " \t")] = '\0';
 	target = get_file(filename);
 
-	while ((filename = strtok(NULL, " \t")) != NULL)
+	while ((filename = strtok(NULL, " \t\n")) != NULL)
 		dag_add_dependency(target, get_file(filename));
 
 	return target;
@@ -81,7 +81,7 @@ void read_simple_makefile(FILE *in)
 			continue;
 		}
 
-		c = readbuf[strcspn(readbuf, " \t\n")];
+		c = readbuf[strspn(readbuf, " \t\n")];
 		if (c == '#' || c == '\0')
 			continue;
 
