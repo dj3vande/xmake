@@ -3,7 +3,7 @@
 
 #include <err.h>
 
-#include "dep-dag.h"
+#include "xmake.h"
 
 struct dep_list dag_by_status[BUILD_NUM_STATUS];
 
@@ -90,4 +90,23 @@ void dag_add_dependency(struct dep_node *node, struct dep_node *dependency)
 
 	if (dependency->status != BUILD_DONE)
 		dag_set_status(node, BUILD_BLOCKED);
+}
+
+void dag_rescan(struct dep_node *node)
+{
+	size_t i;
+	int outdated = 0;
+
+	get_node_time(node);
+	for (i = 0; i < node->dependencies.num; i++)
+	{
+		struct dep_node *dep = node->dependencies.nodes[i];
+		assert(dep->status == BUILD_DONE);
+		get_node_time(dep);
+		if (compar_node_time(&node, &dep) <= 0)
+			outdated = 1;
+	}
+
+	if (!outdated)	/* Node is newer than any of its dependencies */
+		dag_set_status(node, BUILD_DONE);
 }

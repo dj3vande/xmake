@@ -13,6 +13,8 @@ enum build_status
 	BUILD_NUM_STATUS
 };
 
+struct timedata;	/* owned by time-checking module */
+
 /*
  * Every dep_node can be in at most one dep_list (used for keeping track of
  * which nodes are in which state).  A dep_node knows which dep_list it's in
@@ -48,6 +50,9 @@ struct dep_node
 		size_t out_len, out_max;
 	} build_state;
 
+	/* NULL if file is absent */
+	struct timedata *time;
+
 	struct dep_vec dependencies;
 	struct dep_vec dependents;
 	struct dep_list *container;
@@ -68,5 +73,8 @@ void dag_set_status(struct dep_node *node, enum build_status stat);
 
 /* Add a dependency relation and update all bookkeeping */
 void dag_add_dependency(struct dep_node *node, struct dep_node *dependency);
+
+/* Rescan dependency timestamps and mark node as done if appropriate */
+void dag_rescan(struct dep_node *node);
 
 #endif	/* H_DEP_DAG #include guard */

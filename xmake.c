@@ -55,6 +55,14 @@ static void report_results(void)
 void start_target(struct dep_node *n)
 {
 	assert(n->status == BUILD_READY);
+
+	dag_rescan(n);
+	if (n->status == BUILD_DONE)
+	{
+		printf("Target '%s' is up to date, not building\n", n->name);
+		return;
+	}
+
 	start_build(n);
 	if (n->status == BUILD_DONE)
 	{
