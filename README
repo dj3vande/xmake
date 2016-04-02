@@ -20,10 +20,6 @@ the last nonempty build command.  Targets with no build rules are
 phony and will be silently marked as "done" in the internal data
 structures when we notice that all of their dependencies are done.
 
-In the current implementation, every target is rebuilt on every
-invocation of xmake.  Modification time tracking is near the top
-of the to-do list.
-
 Make's rules for deciding which target to build are way down the
 to-do list; supporting POSIX Make is a long-term "would be nice"
 feature, but the medium-term goal is to support Ninja's build files,
